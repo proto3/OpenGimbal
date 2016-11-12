@@ -44,7 +44,7 @@ THE SOFTWARE.
 // I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
 // for both classes must be in the include path of your project
 #include "I2Cdev.h"
-
+#include "BrushlessController.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 //#include "MPU6050.h" // not necessary if using MotionApps include file
 
@@ -158,7 +158,7 @@ void dmpDataReady() {
 // ================================================================
 // ===                      INITIAL SETUP                       ===
 // ================================================================
-
+BrushlessController blc;
 void setup() {
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -174,29 +174,29 @@ void setup() {
     Serial.begin(115200);
     while (!Serial); // wait for Leonardo enumeration, others continue immediately
 
-    // NOTE: 8MHz or slower host processors, like the Teensy @ 3.3v or Ardunio
+    // NOTE: 8MHz or slower host processors, like the Teensy @ 3.3v or Arduino
     // Pro Mini running at 3.3v, cannot handle this baud rate reliably due to
     // the baud timing being too misaligned with processor ticks. You must use
     // 38400 or slower in these cases, or use some kind of external separate
     // crystal solution for the UART timer.
 
     // initialize device
-    //Serial.println(F("Initializing I2C devices..."));
+    // Serial.println(F("Initializing I2C devices..."));
     mpu.initialize();
     pinMode(INTERRUPT_PIN, INPUT);
 
     // verify connection
-    //Serial.println(F("Testing device connections..."));
-    //Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
+    // Serial.println(F("Testing device connections..."));
+    // Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
 
     // wait for ready
-    //Serial.println(F("\nSend any character to begin DMP programming and demo: "));
-    //while (Serial.available() && Serial.read()); // empty buffer
-    //while (!Serial.available());                 // wait for data
+    // Serial.println(F("\nSend any character to begin DMP programming and demo: "));
+    // while (Serial.available() && Serial.read()); // empty buffer
+    // while (!Serial.available());                 // wait for data
     while (Serial.available() && Serial.read()); // empty buffer again
 
     // load and configure the DMP
-    //Serial.println(F("Initializing DMP..."));
+    // Serial.println(F("Initializing DMP..."));
     devStatus = mpu.dmpInitialize();
 
     // supply your own gyro offsets here, scaled for min sensitivity
@@ -208,16 +208,16 @@ void setup() {
     // make sure it worked (returns 0 if so)
     if (devStatus == 0) {
         // turn on the DMP, now that it's ready
-        //Serial.println(F("Enabling DMP..."));
+        Serial.println(F("Enabling DMP..."));
         mpu.setDMPEnabled(true);
 
         // enable Arduino interrupt detection
-        //Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
+        // Serial.println(F("Enabling interrupt detection (Arduino external interrupt 0)..."));
         attachInterrupt(digitalPinToInterrupt(INTERRUPT_PIN), dmpDataReady, RISING);
         mpuIntStatus = mpu.getIntStatus();
 
         // set our DMP Ready flag so the main loop() function knows it's okay to use it
-        //Serial.println(F("DMP ready! Waiting for first interrupt..."));
+        // Serial.println(F("DMP ready! Waiting for first interrupt..."));
         dmpReady = true;
         delay(100);
         mpuInterrupt = true;
@@ -244,7 +244,20 @@ void setup() {
 // ===                    MAIN PROGRAM LOOP                     ===
 // ================================================================
 
+uint32_t x = 0;
 void loop() {
+    // blc.MoveMotorPosSpeed(0, x/100000000, 50);
+    // blc.MoveMotorPosSpeed(1, x/100000000, 50);
+    x++;
+    x = x%10000;
+
+    if(x==0)
+    {
+        blc.MoveMotorPosSpeed(0, 0, 50);
+        blc.MoveMotorPosSpeed(1, 0, 50);
+    }
+
+
     // if programming failed, don't try to do anything
     if (!dmpReady) return;
 

@@ -1,6 +1,6 @@
-*~
-*.gch
-.piolibdeps
 .pioenvs
 .clang_complete
 .gcc-flags.json
+*~
+*.gch
+.piolibdeps
